@@ -1,6 +1,6 @@
 %%
 a{2,} putchar(97); /* ([a-z])\1+ no funcionaba */
-b{2,} putchar(98);
+b{2,} putchar(98); /* Alumno: Renato Luis Postigo Avalos, segundo ejercicio flex*/
 c{2,} putchar(99);
 d{2,} putchar(100);
 e{2,} putchar(101);
