@@ -1,0 +1,5 @@
+#gitignore
+# ========================= #
+# generated classes by file #
+# ========================= #
+interpreter_classes/
