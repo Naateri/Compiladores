@@ -109,7 +109,7 @@ class Ep(NNTerminal):
         if self.prod['+'] != None:
             print('+ T Ep')
             self.prod['+'].interpret()
-            print('Ep text', text)
+            #print('Ep text', text)
             # si sigue más texto: pasarlo
             if len(text) > 2:
                 # Si hay más sumas o restas, Ep no es lambda
