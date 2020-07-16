@@ -20,8 +20,6 @@ def find_pos(array, element):
 
     return -1
 
-
-
 class Token:
     palabra = ""
     indice = -1
@@ -130,7 +128,9 @@ class DiccionarioError:
     codigos = dict()
 
     def __init__(self):
-        self.codigos = {0: 'InvalidOperator', 1: 'IncorrectNumber'}
+        self.codigos = {'E0': 'InvalidOperator', 'E1': 'IncorrectNumber',
+            'W0': 'OperationResultIsNegative',
+            'W1': 'OperationResultIsOver65535'}
 
 class Log:
     errores = list()
@@ -139,14 +139,30 @@ class Log:
     dicError = DiccionarioError()
     dict_error = dicError.codigos
 
+    # Singleton
+    __instance__ = None
+
+    def __init__(self):
+        if Log.__instance__ is None:
+            Log.__instance__ = self
+        else:
+            raise Exception('Only one Log is allowed.')
+
+    @staticmethod
+    def get_instance():
+        if not Log.__instance__:
+            Log()
+        return Log.__instance__
+
     # Adicionar error
     def addError(self, codigo, errorParametro):
         error_text = str(codigo) + " " + self.dict_error[codigo]
         self.errores.append( (error_text, errorParametro) )
 
+    # Adicionar warning
     def addWarning(self, codigo, warningParametro):
         warning_text = str(codigo) + " " + self.dict_error[codigo]
-        self.errores.append( (warning_text, warningParametro) )
+        self.warnings.append( (warning_text, warningParametro) )
 
     def __str__(self): # Print lista
         lista_errores = ''
@@ -821,14 +837,15 @@ class Gramatica:
         # Buscando errores analizador léxico
         for value in queue:
             if value == 'NoOp': # Error operador invalido
-                self.log.addError(0, linea)
+                self.log.get_instance().addError('E0', linea)
             elif value == 'NoNum': # Error numero invalido
-                self.log.addError(1, linea)
+                self.log.get_instance().addError('E1', linea)
 
-        if len(self.log.errores) > 0 or len(self.log.warnings) > 0:
-            print(self.log)
-            self.log.errores.clear()
-            self.log.warnings.clear()
+        if (len(self.log.get_instance().errores) > 0 or
+            len(self.log.warnings) > 0):
+            print(self.log.get_instance())
+            self.log.get_instance().errores.clear()
+            self.log.get_instance().warnings.clear()
             return False
         
         #queue = cadena.split()
@@ -905,7 +922,26 @@ class Gramatica:
                 print(columna.ljust(20), end = ' ')
             print()
 
-        return len(stack) == 0 and len(queue) == 0
+        if len(stack) == 0 and len(queue) == 0:
+            result = E().interpret(cadena)
+
+            if result < 0:
+                self.log.get_instance().addWarning('W0', linea)
+            elif result > 65535:
+                self.log.get_instance().addWarning('W1', linea)
+
+            if len(self.log.get_instance().warnings) > 0:
+                print(self.log.get_instance())
+                #self.log.get_instance().errores.clear()
+                self.log.get_instance().warnings.clear()
+
+            print('Resultado: ', result)
+            
+            return True
+        else:
+            return False
+
+        #return len(stack) == 0 and len(queue) == 0
 
     def cargar(self, texto):
         check_newlines = texto.split('\n')
@@ -1029,16 +1065,25 @@ F  := ( E ) | num
             print("No válida")
     '''
     #cadena = 'num + num * num'
-    cadena = '1 + 1 * 1'
+    '''cadena = '1 + 1 * 1'
     if gramatica.validate_str(cadena) == True:
         print("Válida")
     else:
-        print("No válida")
+        print("No válida")'''
 
     texto = """111@3 + 124a
 12 + 23%14"""
     #cadenas = ['11@3 + 124a', '12 + 23 % 14']
     cadenas = texto.split('\n')
+    linea = 0
+    for cadena in cadenas:
+        gramatica.validate_str(cadena, linea)
+        linea += 1
+
+    texto2 = """16 - 85
+65535 + 2"""
+
+    cadenas = texto2.split('\n')
     linea = 0
     for cadena in cadenas:
         gramatica.validate_str(cadena, linea)
